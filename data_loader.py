@@ -3,7 +3,7 @@ import streamlit as st
 
 @st.cache_data
 def load_data():
-    url = "https://raw.githubusercontent.com/kambojipranav/uber/main/Uber-Jan-Feb-FOIL.csv"
+    url = "Uber-Jan-Feb-FOIL.csv"
     df = pd.read_csv(url)
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     df = df[['date', 'trips']].dropna()
