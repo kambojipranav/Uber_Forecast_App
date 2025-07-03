@@ -1,21 +1,18 @@
 import streamlit as st
 
-st.set_page_config(page_title="ℹ️ About")
-
-st.title("ℹ️ About This App")
+st.set_page_config(page_title="ℹ️ About", layout="centered")
+st.title("ℹ️ About this App")
 
 st.markdown("""
-### 🚖 Uber Forecasting App
+### 🚖 Uber Trip Forecasting App
 
-This multi-page Streamlit app was built to:
+This Streamlit app uses historical Uber trip data to forecast future trip volumes using XGBoost. 
 
-- 📊 Visualize daily Uber trip counts
-- 🤖 Train and evaluate an XGBoost model
-- 🔮 Forecast future Uber trip demand
-- 🌙 Supports Dark/Light mode
-- 🧩 Modular and scalable design
+**Key Features:**
+- Dashboard with interactive visualizations
+- XGBoost-based time series forecasting
+- Downloadable forecast results
+- Clean UI with multi-page navigation
 
----
-
-**Built with ❤️ by Pranav The King**
+Built with ❤️ using Python, Streamlit, and XGBoost.
 """)
