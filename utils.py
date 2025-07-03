@@ -1,65 +1,43 @@
-import streamlit as st
-import numpy as np
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
 import pandas as pd
-import xgboost as xgb
-from sklearn.metrics import mean_absolute_percentage_error, r2_score
+import numpy as np
 
-def set_custom_theme(theme="light"):
-    if theme == "dark":
-        bg_color = "#111"
-        text_color = "#eaeaea"
-        card_color = "#222"
-        gradient = "linear-gradient(135deg, #1d2b64, #f8cdda)"
-    else:
-        bg_color = "#ffffff"
-        text_color = "#222"
-        card_color = "#ffffff"
-        gradient = "linear-gradient(135deg, #f6d365, #fda085)"
+def prepare_features(df):
+    df = df.copy()
+    df['dayofweek'] = df['Date'].dt.dayofweek
+    df['day'] = df['Date'].dt.day
+    df['month'] = df['Date'].dt.month
+    df['year'] = df['Date'].dt.year
+    return df
 
-    st.markdown(f"""
-        <style>
-        html, body, .stApp {{
-            background: {gradient};
-            color: {text_color};
-        }}
-        .main {{
-            background-color: {card_color};
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }}
-        footer {{ visibility: hidden; }}
-        .footer-text {{
-            position: fixed;
-            bottom: 15px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 14px;
-            color: {text_color};
-            opacity: 0.7;
-        }}
-        </style>
-        <div class="footer-text">2025 © Pranav The King</div>
-    """, unsafe_allow_html=True)
+def train_xgboost_model(df):
+    df = prepare_features(df)
+    X = df[['dayofweek', 'day', 'month', 'year']]
+    y = df['Trips']
 
-def forecast_xgboost(series, window):
-    X, y = [], []
-    for i in range(len(series) - window):
-        X.append(series[i:i + window])
-        y.append(series[i + window])
-    X, y = np.array(X), np.array(y)
-    split = int(len(X) * 0.8)
-    model = xgb.XGBRegressor(objective="reg:squarederror", n_estimators=150)
-    model.fit(X[:split], y[:split])
-    y_pred = model.predict(X[split:])
-    return y[split:], y_pred, model
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-def evaluate(y_true, y_pred):
-    return {
-        "MAPE": mean_absolute_percentage_error(y_true, y_pred),
-        "R2": r2_score(y_true, y_pred)
-    }
+    model = XGBRegressor(n_estimators=100)
+    model.fit(X_train, y_train)
 
-def get_download_df(index, actual, predicted):
-    return pd.DataFrame({"timestamp": index, "actual": actual, "predicted": predicted})
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    return model, mae, r2, X_test, y_test, y_pred
+
+def forecast_future(model, days, base_date):
+    future_dates = pd.date_range(base_date + pd.Timedelta(days=1), periods=days)
+    df_future = pd.DataFrame({
+        'Date': future_dates,
+        'dayofweek': future_dates.dayofweek,
+        'day': future_dates.day,
+        'month': future_dates.month,
+        'year': future_dates.year
+    })
+    X_future = df_future[['dayofweek', 'day', 'month', 'year']]
+    predictions = model.predict(X_future)
+    df_future['Forecast'] = predictions.astype(int)
+    return df_future
