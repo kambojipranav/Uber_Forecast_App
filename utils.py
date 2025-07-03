@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import mean_absolute_percentage_error, r2_score
-from prophet import Prophet
-from pmdarima import auto_arima
 
 def set_custom_theme(theme="light"):
     if theme == "dark":
@@ -56,22 +54,6 @@ def forecast_xgboost(series, window):
     model.fit(X[:split], y[:split])
     y_pred = model.predict(X[split:])
     return y[split:], y_pred, model
-
-def forecast_arima(series):
-    model = auto_arima(series, seasonal=True, suppress_warnings=True)
-    n = int(len(series) * 0.2)
-    forecast = model.predict(n_periods=n)
-    return series[-n:], forecast, model
-
-def forecast_prophet(df):
-    df_p = df.reset_index().rename(columns={df.index.name or 'index': "ds", df.columns[0]: "y"})
-    model = Prophet()
-    model.fit(df_p)
-    future = model.make_future_dataframe(periods=int(len(df)*0.2), freq="H")
-    forecast = model.predict(future)
-    y_true = df_p["y"].values[-int(len(df)*0.2):]
-    y_pred = forecast["yhat"].values[-int(len(df)*0.2):]
-    return y_true, y_pred, model
 
 def evaluate(y_true, y_pred):
     return {
