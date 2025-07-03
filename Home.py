@@ -1,16 +1,30 @@
 import streamlit as st
-from utils import set_custom_theme
+from dashboard import show_dashboard
+from forecast import show_forecast
+from about import show_about
 
-st.set_page_config(page_title="🚖 Uber Forecast App", layout="wide")
+# App Settings
+st.set_page_config(page_title="🚖 Uber Forecasting App", layout="wide")
 
 st.sidebar.title("⚙️ App Settings")
-theme_mode = st.sidebar.radio("Select Theme Mode", ["Light", "Dark"])
-set_custom_theme(theme_mode.lower())
+theme = st.sidebar.radio("Select Theme Mode", ["Light", "Dark"])
 
-st.sidebar.markdown("---")
-st.sidebar.info("Navigate pages via sidebar 👈")
+# Simulate theme switching
+if theme == "Dark":
+    st.markdown("<style>body { background-color: #0e1117; color: white; }</style>", unsafe_allow_html=True)
 
-st.markdown("""
-    <h1 style='text-align:center;'>📊 Uber Forecasting App (Multi-Page)</h1>
-    <p style='text-align:center;'>Navigate using the sidebar — Dashboard, Forecasting, About</p>
-""", unsafe_allow_html=True)
+# Navigation Buttons
+st.sidebar.title("🔍 Navigate Pages")
+page = st.sidebar.radio("Go to", ["Dashboard", "Forecast", "About"])
+
+# Route to corresponding page
+if page == "Dashboard":
+    show_dashboard()
+elif page == "Forecast":
+    show_forecast()
+elif page == "About":
+    show_about()
+
+# Footer
+st.markdown("---")
+st.markdown("<center><sub>2025 © Pranav The King</sub></center>", unsafe_allow_html=True)
