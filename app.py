@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 
 st.set_page_config(page_title="🚖 Uber Forecasting App (Multi-Page)", layout="wide")
 
@@ -18,15 +17,5 @@ st.markdown(
         <p style="font-size: 1.2em;">Navigate using the sidebar — <b>Dashboard</b>, <b>Forecasting</b>, <b>About</b></p>
     </div>
     """,
-    unsafe_allow_html=True
-)
-
-with st.sidebar:
-    st.markdown("---")
-    st.info("Navigate pages via sidebar 👈")
-
-st.markdown(
-    "<div style='position: fixed; bottom: 20px; width: 100%; text-align: center;'>"
-    "2025 © Pranav The King</div>",
     unsafe_allow_html=True
 )
