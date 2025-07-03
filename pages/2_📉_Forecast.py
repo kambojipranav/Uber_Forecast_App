@@ -2,29 +2,43 @@ import streamlit as st
 from data_loader import load_data
 from utils import train_xgboost_model, forecast_future
 import plotly.graph_objects as go
-import pandas as pd
 
-st.set_page_config(page_title="📉 Forecasting", layout="wide")
-st.title("📉 Uber Trip Forecasting")
+st.set_page_config(page_title="📉 Forecast", layout="wide")
 
+st.title("📉 Forecast Future Uber Trips")
+
+# Load data
 df = load_data()
 
-if not df.empty:
-    model, features, mape = train_xgboost_model(df)
+# Show raw data toggle
+with st.expander("🔍 Preview Raw Data"):
+    st.dataframe(df.head())
 
-    st.success(f"Model trained! MAPE: {mape:.2f}")
+# Display model training status
+st.info("📊 Training XGBoost model on historical trip data...")
 
-    forecast_days = st.slider("Select number of future days to forecast:", min_value=1, max_value=30, value=7)
+model, error = train_xgboost_model(df)
 
-    if st.button("Run Forecast"):
-        last_date = df['date'].max()
-        future_df = forecast_future(model, last_date, forecast_days, features)
+st.success(f"✅ Model trained successfully! MAE: {error:.2f} trips")
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df['date'], y=df['trips'], mode='lines+markers', name='Actual Trips'))
-        fig.add_trace(go.Scatter(x=future_df['date'], y=future_df['predicted_trips'], mode='lines+markers', name='Forecasted Trips'))
-        fig.update_layout(title="Actual vs Forecasted Trips", xaxis_title="Date", yaxis_title="Trips")
-        st.plotly_chart(fig, use_container_width=True)
+# User input for forecasting
+n_days = st.slider("📆 Select number of future days to forecast:", min_value=1, max_value=30, value=7)
 
-        csv = future_df.to_csv(index=False).encode('utf-8')
-        st.download_button("Download Forecast", csv, "forecast.csv", "text/csv", key='download-forecast')
+# Forecast future trips
+forecast_df = forecast_future(model, n_days)
+
+# Plot the forecast
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=forecast_df["Date"], y=forecast_df["Forecasted Trips"],
+                         mode='lines+markers', name='Forecasted Trips'))
+fig.update_layout(title="📈 Forecasted Uber Trips", xaxis_title="Date", yaxis_title="Trips")
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Show forecast table
+with st.expander("📄 Forecast Data"):
+    st.dataframe(forecast_df)
+
+# Download forecast CSV
+csv = forecast_df.to_csv(index=False).encode('utf-8')
+st.download_button("📥 Download Forecast", data=csv, file_name='forecast.csv', mime='text/csv')
