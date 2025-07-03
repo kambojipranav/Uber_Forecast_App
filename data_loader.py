@@ -1,12 +1,11 @@
 import pandas as pd
-import streamlit as st
 
 @st.cache_data
 def load_data():
-    url = "Uber-Jan-Feb-FOIL.csv"
-    df = pd.read_csv(url)
-    df['date'] = pd.to_datetime(df['date'], errors='coerce')
-    df = df[['date', 'trips']].dropna()
-    df = df.groupby('date').sum().resample('H').sum()
-    df['trips'] = pd.to_numeric(df['trips'], errors='coerce').fillna(0)
-    return df
+    df = pd.read_csv("Uber-Jan-Feb-FOIL.csv")
+    df['Date/Time'] = pd.to_datetime(df['Date/Time'], errors='coerce')
+    df = df.dropna(subset=['Date/Time'])
+    df['Date'] = df['Date/Time'].dt.date
+    daily_data = df.groupby('Date').size().reset_index(name='Trips')
+    daily_data['Date'] = pd.to_datetime(daily_data['Date'])
+    return daily_data
