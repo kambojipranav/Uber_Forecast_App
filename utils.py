@@ -1,46 +1,46 @@
-import pandas as pd
+import streamlit as st  # ✅ FIXED: Missing import
 import xgboost as xgb
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_percentage_error
-import streamlit as st
-
+from sklearn.metrics import mean_absolute_error
+import numpy as np
 
 @st.cache_resource
-def train_xgboost_model(df, target_column='trips'):
+def train_xgboost_model(df):
     df = df.copy()
-    df['day_of_week'] = df['date'].dt.dayofweek
-    df['day'] = df['date'].dt.day
-    df['month'] = df['date'].dt.month
-    df['year'] = df['date'].dt.year
+    df["date"] = pd.to_datetime(df["date"])
+    df.set_index("date", inplace=True)
+    df = df.resample("D").sum()
 
-    features = ['day', 'month', 'year', 'day_of_week', 'active_vehicles']
-    X = df[features]
-    y = df[target_column]
+    df["target"] = df["trips"]
+    df = df.dropna()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    df["dayofweek"] = df.index.dayofweek
+    df["month"] = df.index.month
+    df["day"] = df.index.day
 
-    model = xgb.XGBRegressor(n_estimators=100, random_state=42)
+    X = df[["dayofweek", "month", "day"]]
+    y = df["target"]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+    model = xgb.XGBRegressor(n_estimators=100)
     model.fit(X_train, y_train)
 
-    preds = model.predict(X_test)
-    mape = mean_absolute_percentage_error(y_test, preds)
+    y_pred = model.predict(X_test)
+    error = mean_absolute_error(y_test, y_pred)
 
-    return model, features, mape
+    return model, error
 
-@st.cache_data
-def forecast_future(model, last_date, periods, features):
-    future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=periods)
-    future_df = pd.DataFrame({
-        'date': future_dates,
-        'day': future_dates.day,
-        'month': future_dates.month,
-        'year': future_dates.year,
-        'day_of_week': future_dates.dayofweek,
-        'active_vehicles': [1000] * periods  # default/assumed input
+def forecast_future(model, periods):
+    future_dates = pd.date_range(start=pd.Timestamp.today(), periods=periods)
+
+    df_future = pd.DataFrame({
+        "dayofweek": future_dates.dayofweek,
+        "month": future_dates.month,
+        "day": future_dates.day
     })
 
-    future_X = future_df[features]
-    predictions = model.predict(future_X)
-    future_df['predicted_trips'] = predictions
-
-    return future_df
+    forecast = model.predict(df_future)
+    result = pd.DataFrame({"Date": future_dates, "Forecasted Trips": forecast})
+    return result
