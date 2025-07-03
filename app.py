@@ -25,7 +25,7 @@ font="sans serif"
     with open(".streamlit/config.toml", "w") as f:
         f.write(theme_content)
 
-    st.experimental_rerun()
+    st.rerun()
 
 st.title("🚖 Uber Forecasting App")
 st.markdown("Navigate using the sidebar — Dashboard, Forecasting, About.")
