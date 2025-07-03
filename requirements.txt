@@ -4,5 +4,5 @@ numpy
 xgboost
 scikit-learn
 plotly
-prophet
-pmdarima
+prophet==1.1.5
+pmdarima==2.0.3
