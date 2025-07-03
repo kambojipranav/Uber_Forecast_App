@@ -2,30 +2,29 @@ import streamlit as st
 from data_loader import load_data
 from utils import train_xgboost_model, forecast_future
 import plotly.graph_objects as go
+import pandas as pd
 
-st.set_page_config(page_title="🔮 Forecasting")
-
-st.title("🔮 Forecast Future Uber Trips")
+st.set_page_config(page_title="📉 Forecasting", layout="wide")
+st.title("📉 Uber Trip Forecasting")
 
 df = load_data()
-model, mae, r2, X_test, y_test, y_pred = train_xgboost_model(df)
 
-st.subheader("📈 Model Performance")
-st.metric("Mean Absolute Error", f"{mae:.2f}")
-st.metric("R² Score", f"{r2:.2f}")
+if not df.empty:
+    model, features, mape = train_xgboost_model(df)
 
-# Forecasting
-st.subheader("📆 Forecast into Future")
-days = st.slider("Select days to forecast:", 1, 30, 7)
-base_date = df['Date'].max()
-forecast_df = forecast_future(model, days, base_date)
+    st.success(f"Model trained! MAPE: {mape:.2f}")
 
-# Plotting
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=df['Date'], y=df['Trips'], mode='lines', name='Actual'))
-fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['Forecast'], mode='lines+markers', name='Forecast'))
+    forecast_days = st.slider("Select number of future days to forecast:", min_value=1, max_value=30, value=7)
 
-fig.update_layout(title='Uber Trips Forecast', xaxis_title='Date', yaxis_title='Trips')
-st.plotly_chart(fig, use_container_width=True)
+    if st.button("Run Forecast"):
+        last_date = df['date'].max()
+        future_df = forecast_future(model, last_date, forecast_days, features)
 
-st.dataframe(forecast_df, use_container_width=True)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df['date'], y=df['trips'], mode='lines+markers', name='Actual Trips'))
+        fig.add_trace(go.Scatter(x=future_df['date'], y=future_df['predicted_trips'], mode='lines+markers', name='Forecasted Trips'))
+        fig.update_layout(title="Actual vs Forecasted Trips", xaxis_title="Date", yaxis_title="Trips")
+        st.plotly_chart(fig, use_container_width=True)
+
+        csv = future_df.to_csv(index=False).encode('utf-8')
+        st.download_button("Download Forecast", csv, "forecast.csv", "text/csv", key='download-forecast')
