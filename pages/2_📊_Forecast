@@ -1,0 +1,40 @@
+import streamlit as st
+from data_loader import load_data
+from utils import forecast_xgboost, forecast_arima, forecast_prophet, evaluate, get_download_df
+import plotly.graph_objects as go
+
+st.markdown("<h2 style='text-align:center;'>📈 Forecast Uber Trips</h2>", unsafe_allow_html=True)
+
+model_choice = st.sidebar.selectbox("Choose Forecasting Model", ["XGBoost", "Auto ARIMA", "Prophet"])
+lag_window = st.sidebar.slider("Lag Window (for XGBoost only)", min_value=6, max_value=72, step=6, value=24)
+run_button = st.sidebar.button("🚀 Run Forecast")
+
+df = load_data()
+y_series = df['trips']
+
+if run_button:
+    with st.spinner("Running Forecast..."):
+        if model_choice == "XGBoost":
+            y_true, y_pred, model = forecast_xgboost(y_series.values, lag_window)
+            forecast_index = df.index[lag_window + len(y_series) - len(y_true):]
+        elif model_choice == "Auto ARIMA":
+            y_true, y_pred, model = forecast_arima(y_series)
+            forecast_index = df.index[-len(y_true):]
+        elif model_choice == "Prophet":
+            y_true, y_pred, model = forecast_prophet(y_series.to_frame())
+            forecast_index = df.index[-len(y_true):]
+
+        metrics = evaluate(y_true, y_pred)
+        st.success(f"✅ MAPE: `{metrics['MAPE']:.2%}`")
+        st.success(f"✅ R² Score: `{metrics['R2']:.2%}`")
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=forecast_index, y=y_true, mode='lines', name='Actual', line=dict(color='royalblue')))
+        fig.add_trace(go.Scatter(x=forecast_index, y=y_pred, mode='lines', name='Predicted', line=dict(color='orangered', dash='dash')))
+        fig.update_layout(title=f"🔮 Forecasting with {model_choice}", xaxis_title="Time", yaxis_title="Trips",
+                          template="plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white")
+        st.plotly_chart(fig, use_container_width=True)
+
+        pred_df = get_download_df(forecast_index, y_true, y_pred)
+        csv = pred_df.to_csv(index=False).encode('utf-8')
+        st.download_button("⬇️ Download Predictions as CSV", csv, file_name="forecast.csv", mime="text/csv")
