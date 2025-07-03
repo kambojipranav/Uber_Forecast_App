@@ -3,6 +3,7 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_percentage_error
 
+@st.cache_resource
 def train_xgboost_model(df, target_column='trips'):
     df = df.copy()
     df['day_of_week'] = df['date'].dt.dayofweek
@@ -24,6 +25,7 @@ def train_xgboost_model(df, target_column='trips'):
 
     return model, features, mape
 
+@st.cache_data
 def forecast_future(model, last_date, periods, features):
     future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=periods)
     future_df = pd.DataFrame({
