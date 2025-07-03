@@ -16,13 +16,31 @@ if "theme" not in st.session_state:
 # -----------------------------
 st.sidebar.markdown("## 🛠️ App Settings")
 toggle = st.sidebar.checkbox("🌗 Dark Mode", value=st.session_state.theme == "dark")
-if toggle:
-    st.session_state.theme = "dark"
-else:
-    st.session_state.theme = "light"
+st.session_state.theme = "dark" if toggle else "light"
 
 # -----------------------------
-# STYLING FOR CENTERED TEXT
+# THEME-BASED BACKGROUND
+# -----------------------------
+dark_bg = """
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        }
+    </style>
+"""
+
+light_bg = """
+    <style>
+        body {
+            background: linear-gradient(135deg, #E0F7FA, #F1F8E9);
+        }
+    </style>
+"""
+
+st.markdown(dark_bg if st.session_state.theme == "dark" else light_bg, unsafe_allow_html=True)
+
+# -----------------------------
+# CENTERED TITLE AND TEXT
 # -----------------------------
 st.markdown("""
     <style>
@@ -44,7 +62,7 @@ st.markdown("""
         }
         .subtitle {
             font-size: 1.2rem;
-            color: #aaa;
+            color: #ffffffcc;
         }
         .footer {
             position: fixed;
@@ -52,7 +70,7 @@ st.markdown("""
             width: 100%;
             text-align: center;
             font-size: 0.85rem;
-            color: gray;
+            color: #cccccc;
         }
     </style>
 """, unsafe_allow_html=True)
