@@ -1,5 +1,3 @@
-# Create a README.md file with the Uber Forecast App description
-readme_content = """
 # 🚖 Uber Trips Forecasting with XGBoost
 
 A stylish and interactive Streamlit-based web application for **time series forecasting** of Uber trip data using powerful **XGBoost** models with lag-based features. Whether you're analyzing ride demand, vehicle usage, or trip patterns, this app enables smart forecasting with ease and visual clarity.
@@ -38,3 +36,6 @@ pip install -r requirements.txt
 
 # 3. Run the app
 streamlit run app.py
+
+## Output After Training for some time looks like :
+
